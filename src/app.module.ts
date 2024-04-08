@@ -4,6 +4,8 @@ import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import Joi from 'joi';
 
+import { OrdersModule } from './orders/orders.module';
+
 import { AppController } from './app.controller';
 
 import { AppService } from './app.service';
@@ -24,6 +26,7 @@ import { ThrottlerBehindProxyGuard } from './common/guards/throttlerProxy.guard'
         PORT: Joi.number().required(),
       }),
     }),
+    OrdersModule,
   ],
   controllers: [AppController],
   providers: [
