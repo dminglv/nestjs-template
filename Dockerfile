@@ -1,30 +1,39 @@
-FROM node:20-alpine as builder
+FROM node:22-alpine AS builder
 
-ENV NODE_ENV build
+ENV PNPM_HOME="/pnpm" NODE_ENV=development
 
+RUN apk add --no-cache openssl libc6-compat \
+    && corepack enable
+
+WORKDIR /app
+
+# Copy package files for caching
+COPY package.json pnpm-lock.yaml* ./
+RUN pnpm install --frozen-lockfile
+
+COPY . .
+RUN pnpm run build
+
+FROM node:22-alpine
+
+# Set environment for runtime
+ENV PNPM_HOME="/pnpm" NODE_ENV=production
+
+# Install runtime dependencies
+RUN apk add --no-cache openssl libc6-compat \
+    && corepack enable
+
+WORKDIR /app
+
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/pnpm-lock.yaml ./
+
+RUN pnpm install --prod --frozen-lockfile
+
+COPY --from=builder /app/dist    ./dist
+
+RUN chown -R node:node /app
 USER node
-WORKDIR /home/node
 
-COPY --chown=node:node package*.json yarn.lock ./
-
-RUN yarn install --frozen-lockfile --production=false
-
-COPY --chown=node:node . .
-
-RUN yarn build
-
-# ---
-
-FROM node:20-alpine
-
-ENV NODE_ENV production
-
-USER node
-WORKDIR /home/node
-
-COPY --from=builder --chown=node:node /home/node/package*.json ./
-COPY --from=builder --chown=node:node /home/node/yarn.lock ./
-COPY --from=builder --chown=node:node /home/node/node_modules/ ./node_modules/
-COPY --from=builder --chown=node:node /home/node/dist/ ./dist/
-
-CMD ["yarn", "start:prod"]
+# Start app
+CMD ["node", "dist/main"]

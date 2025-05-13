@@ -1,6 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
 import { SkipThrottle } from '@nestjs/throttler';
-import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { AppService } from './app.service';
 
@@ -10,16 +9,7 @@ export class AppController {
 
   @Get('health')
   @SkipThrottle()
-  @ApiTags('Service')
-  @ApiOperation({ summary: 'Checking backend status' })
-  @ApiOkResponse({
-    description: 'Service works',
-    schema: {
-      type: 'string',
-      example: 'OK',
-    },
-  })
-  async getStatus(): Promise<'OK'> {
+  getStatus(): 'OK' {
     return this.appService.getStatus();
   }
 }

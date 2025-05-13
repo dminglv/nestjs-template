@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { ThrottlerModule } from '@nestjs/throttler';
-import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import Joi from 'joi';
 
@@ -10,7 +9,7 @@ import { AppController } from './app.controller';
 
 import { AppService } from './app.service';
 
-import { ThrottlerBehindProxyGuard } from './common/guards/throttlerProxy.guard';
+import { ThrottlerGuardProvider } from './throttler-guard.provider';
 
 @Module({
   imports: [
@@ -22,19 +21,13 @@ import { ThrottlerBehindProxyGuard } from './common/guards/throttlerProxy.guard'
     ]),
     ConfigModule.forRoot({
       validationSchema: Joi.object({
-        ENVIRONMENT: Joi.string().required(),
-        PORT: Joi.number().required(),
+        ENVIRONMENT: Joi.string().required().default('local-dev'),
+        PORT: Joi.number().required().default(8000),
       }),
     }),
     OrdersModule,
   ],
   controllers: [AppController],
-  providers: [
-    AppService,
-    {
-      provide: APP_GUARD,
-      useClass: ThrottlerBehindProxyGuard,
-    },
-  ],
+  providers: [AppService, ThrottlerGuardProvider],
 })
 export class AppModule {}
